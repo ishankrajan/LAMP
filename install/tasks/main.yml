@@ -1,0 +1,4 @@
+---
+# tasks file for install
+- name: Installing packages {{ app_name}}
+  apt: name={{app_name}} state=present update_cache=true

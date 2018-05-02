@@ -1,0 +1,8 @@
+[hosts]
+host1 ansible_ssh_host=10.1.1.113
+[web]
+web1 ansible_ssh_host=10.1.1.12
+[database]
+db1 ansible_ssh_host=10.1.1.13
+[lamp]
+lamp1 ansible_ssh_host=10.1.1.11

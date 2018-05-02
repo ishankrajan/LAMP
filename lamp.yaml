@@ -1,0 +1,61 @@
+---
+ - name: correct the ssh config for the machines
+   hosts: lamp
+   become: True
+   become_method: sudo
+   vars:
+    array_pkg:
+      - apache2
+      - curl
+      - php
+      - libapache2-mod-php
+      - php-mcrypt
+      - php-mysql
+      - php-cli
+
+   pre_tasks: 
+     - name: ping remote node
+       ping:
+
+     - name: Upgrade all packages to the latest version
+       apt:  
+         upgrade: dist
+   roles:
+     - { role: install, app_name: "{{ array_pkg }}" }
+
+   post_tasks:
+     - name: test_apache2_config
+       shell: "apache2ctl configtest"
+       register: teststage1
+       
+     - name: Last message for apache restarted
+       debug: 
+        msg: "{{ teststage1.stderr_lines  }} RC= {{ teststage1.rc  }}"
+       
+     - name: Replace ServerName with localip
+       lineinfile: 
+         path: /etc/apache2/apache2.conf
+         regexp: '^ServerName'
+         line: 'ServerName {{ inventory_hostname }}'
+
+       notify:
+       - call_restart
+
+     - name: chnage index.php  priority
+       lineinfile: 
+         path: /etc/apache2/mods-enabled/dir.conf
+         regexp: '    DirectoryIndex index.html index.cgi index.pl index.php index.xhtml index.htm'
+         line: '    DirectoryIndex index.php index.html index.cgi index.pl index.xhtml index.htm'
+
+       notify:
+       - call_restart
+         
+     - name: Install  mysql-init
+       script: ./install_mysql.sh
+       
+   handlers:
+    - name: call_restart
+      service:
+       name: apache2
+       state: restarted
+
